@@ -1,11 +1,11 @@
-import { View, Text } from 'react-native'
+import React from 'react';
+import { View, Text } from 'react-native';
 
 const Inicio = () => {
-  return (
-    <View>
-      <Text>Este es el Dashboard</Text>
-    </View>
-  )
-}
+  return(
+    <>
+    </>
+  );
+};
 
-export default Inicio
+export default Inicio;

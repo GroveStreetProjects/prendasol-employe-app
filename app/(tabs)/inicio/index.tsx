@@ -30,6 +30,11 @@ const Inicio = () => {
           />
         </View>
       </View>
+
+      <View className='flex justify-center items-center p-10 m-10 bg-blue-400 rounded-3xl'>
+        <Text className='text-2xl font-bold'>Articulos empeñados</Text>
+        <Text className='text-2xl'>4</Text>
+      </View>
     </>
   )
 }

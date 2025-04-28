@@ -17,7 +17,7 @@ const Inicio = () => {
         <Text className="text-4xl text-bold m-5 text-center">Inicio</Text>
       </View>
 
-      <View className="absolute top-0 right-0">
+      <View className="absolute top-0 right-0 z-10">
         <View style={{display: isVisible ? 'flex' : 'none'}}>
           <Text className="m-5" onPress={toggleVisibility}>Menu</Text>
         </View>
@@ -31,10 +31,21 @@ const Inicio = () => {
         </View>
       </View>
 
-      <View className='flex justify-center items-center p-10 m-10 bg-blue-400 rounded-3xl'>
+      <View className='flex justify-center items-center p-10 m-10 bg-blue-400 rounded-3xl z-1'>
         <Text className='text-2xl font-bold'>Articulos empeñados</Text>
         <Text className='text-2xl'>4</Text>
       </View>
+
+      <View className='flex justify-center items-center p-10 m-10 bg-yellow-500 rounded-3xl z-1'>
+        <Text className='text-2xl font-bold'>Articulos en vencimiento</Text>
+        <Text className='text-2xl'>8</Text>
+      </View>
+
+      <View className='flex justify-center items-center p-10 m-10 bg-red-600 rounded-3xl z-1'>
+        <Text className='text-2xl font-bold'>Articulos expirados</Text>
+        <Text className='text-2xl'>1</Text>
+      </View>
+
     </>
   )
 }

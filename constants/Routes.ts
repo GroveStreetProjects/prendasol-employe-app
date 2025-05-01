@@ -6,6 +6,13 @@ interface MenuRoute {
   name: string;
 }
 
+export const rutaPrincipal: MenuRoute[] = [
+  {
+    title: 'Inicio',
+    name: 'inicio/index',
+  },
+];
+
 export const rutasEmpenio: MenuRoute[] = [
   {
     title: 'Nuevo Empeño',
@@ -29,6 +36,7 @@ export const rutasReporte: MenuRoute[] = [
 ];
 
 export const allRoutes: MenuRoute[] = [
+  ...rutaPrincipal,
   ...rutasCliente,
   ...rutasEmpenio,
   ...rutasReporte,

@@ -1,211 +1,220 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Dropdown } from 'react-native-element-dropdown'
+import { useState } from 'react';
+import { TextInput, ScrollView, KeyboardType, Alert, TouchableOpacity } from 'react-native'
+
+import ThemedView from '@/components/shared/ThemedView';
+import ThemedText from '@/components/shared/ThemedText';
+
+interface ClientData {
+  [key: string]: string | number;
+}
+
+interface ArticleData {
+  [key: string]: string | number | Date;
+}
+
+interface FormData {
+  cliente: ClientData;
+  articulo: ArticleData;
+}
+
+interface FormSection {
+  [key: string]: any;
+}
 
 const RegistrarEmpenio = () => {
 
-  const [nombre, setNombre] = useState('');
-  const [apPat, setApPat] = useState('');
-  const [apMat, setApMat] = useState('');
-  const [numCI, setNumCI] = useState('');
-  const [numCel, setNumCel] = useState('');
-  const [correo, setCorreo] = useState('');
+  const [formData, setFormData] = useState<{
+    cliente: FormSection;
+    articulo: FormSection;
+  }>({
+    cliente: {},
+    articulo: {},
+  });
 
-  const [nomArt, setNomArt] = useState('');
-  const [preVal, setPreVal] = useState('');
-  const [interes, setInteres] = useState('');
-  const [desc, setDesc] = useState('');
-
-  const [valor, setValor] = useState(null);
-
-  const tiposArt = [
-    { label: 'Joyas', value: '1' },
-    { label: 'Piedras', value: '2' },
+  const fieldsClient = [
+    {
+      label: 'Id',
+      name: 'Id',
+      placeholder: '',
+      type: 'numeric',
+      required: false,
+    },
+    {
+      label: 'Cédula de Identidad',
+      name: 'CI',
+      placeholder: '1234567...',
+      type: 'text',
+      required: true,
+    },
+    {
+      label: 'Nombres',
+      name: 'Nombres',
+      placeholder: 'Juan Fernando...',
+      type: 'text',
+      required: true,
+    },
+    {
+      label: 'Apellido Paterno',
+      name: 'Paterno',
+      placeholder: 'Pérez...',
+      type: 'text',
+      required: false,
+    },
+    {
+      label: 'Apellido Materno',
+      name: 'Materno',
+      placeholder: 'Martínez...',
+      type: 'text',
+      required: false,
+    },
+    {
+      label: 'Correo Electrónico',
+      name: 'Correo',
+      placeholder: 'correo@correo.com...',
+      type: 'email',
+      required: true,
+    },
+    {
+      label: 'Teléfono',
+      name: 'Telefono',
+      placeholder: '70123456...',
+      type: 'phone',
+      required: true,
+    },
   ];
 
+  const fieldsArticle = [
+    {
+      label: 'Nombre',
+      name: 'Nombre',
+      placeholder: 'Anillo de oro...',
+      type: 'text',
+      required: true,
+    },
+    {
+      label: 'Descripción',
+      name: 'Descripcion',
+      placeholder: 'Anillo de oro de 18k...',
+      type: 'text',
+      required: true,
+    },
+    {
+      label: 'Precio de Empeño',
+      name: 'Precio_Empeno',
+      placeholder: '800.00...',
+      type: 'numeric',
+      required: true,
+    },
+  ];
+
+  const handleInputChange = (
+    section: 'cliente' | 'articulo',
+    name: string,
+    value: string | number
+  ) => {
+    setFormData({
+      ...formData,
+      [section]: {
+        ...formData[section],
+        [name]: value
+      }
+    });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch('localhost:3000/registrar-cliente', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Éxito', 'Datos enviados correctamente');
+        setFormData({
+          cliente: {},
+          articulo: {},
+        });
+      } else {
+        Alert.alert('Error', data.message || 'Error al enviar datos');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Hubo un problema con la conexión');
+      console.error('Error al enviar datos:', error);
+    }
+  };
+
   return (
-    <SafeAreaView>
-      <View style={styles.containerHeader}>
-        <Text style={styles.titulos}>Registro de nuevo empeño - Prendasol</Text>
-      </View>
-      <View style={styles.containerTitulos}>
-        <Text style={styles.titulos}>
-          Información del cliente:
-        </Text>
-      </View>
-      <View style={styles.containerCliente}>
-        <TextInput
-          style={styles.input}
-          onChangeText={setNombre}
-          value={nombre}
-          placeholder='Nombre completo del cliente'
-          keyboardType='default'
-        />
-        <TextInput
-          style={styles.input}
-          onChangeText={setApPat}
-          value={apPat}
-          placeholder='Apellido Paterno'
-          keyboardType='default'
-        />
-        <TextInput
-          style={styles.input}
-          onChangeText={setApMat}
-          value={apMat}
-          placeholder='Apellido Materno'
-          keyboardType='default'
-        />
-      </View>
-      <View style={styles.containerCliente}>
-        <TextInput
-          style={styles.input}
-          onChangeText={setNumCI}
-          value={numCI}
-          placeholder='Cédula de Identidad'
-          keyboardType='numeric'
-        />
-        <TextInput
-          style={styles.input}
-          onChangeText={setNumCel}
-          value={numCel}
-          placeholder='Nº de Celular'
-          keyboardType='numeric'
-        />
-        <TextInput
-          style={styles.input}
-          onChangeText={setCorreo}
-          value={correo}
-          placeholder='Correo Electrónico'
-          keyboardType='default'
-        />
-      </View>
-      <View style={styles.containerTitulos}>
-        <Text style={styles.titulos}>
-          Información del artículo:
-        </Text>
-      </View>
-      <View style={styles.containerArticulo}>
-        <TextInput
-          style={styles.input}
-          onChangeText={setNomArt}
-          value={nomArt}
-          placeholder='Nombre del artículo'
-          keyboardType='default'
-        />
-        <TextInput
-          style={styles.input}
-          onChangeText={setPreVal}
-          value={preVal}
-          placeholder='Precio valuado'
-          keyboardType='numeric'
-        />
-        <Dropdown
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          iconStyle={styles.iconStyle}
-          data={tiposArt}
-          maxHeight={300}
-          labelField="label"
-          valueField="value"
-          placeholder="Seleccione una opción"
-          value={valor}
-          onChange={item => {
-            setValor(item.value);
-          }}
-          search={false}
-        />
-      </View>
-      <View style={styles.containerDescripcion}>
-        <TextInput
-          style={styles.inputDesc}
-          onChangeText={setDesc}
-          value={desc}
-          placeholder='Descripción general'
-          keyboardType='default'
-          multiline={true}
-          numberOfLines={4}
-          textAlign='left'
-        />
-      </View>
-    </SafeAreaView>
+    <ThemedView className='flex-1 bg-light-background rounded-tl-3xl'>
+      <ThemedText type='semi-bold' className="text-center py-4">Registrar Emepeño</ThemedText>
+      <ScrollView className='flex flex-1 p-6 mx-[50] bg-white rounded-3xl items-center'>
+
+        <ThemedText type='h2' className='text-center pb-2 font-semibold'>Datos del Cliente</ThemedText>
+        <ThemedView className='flex flex-row flex-wrap gap-4 justify-center'>
+          {
+            fieldsClient.map((item, index) => {
+              const isRequiredAndEmpty = item.required && (!formData.articulo[item.name] || formData.articulo[item.name] === '');
+              return index !== 0
+                ? (
+                  <ThemedView className='w-[250]' key={item.name}>
+                    <ThemedText>
+                      {item.label}
+                      {item.required
+                        ? ' *'
+                        : null}
+                    </ThemedText>
+                    <TextInput
+                      className={`border rounded-xl p-2 text-gray-500  ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
+                      placeholder={item.placeholder}
+                      value={formData.cliente[item.name] || ''}
+                      onChangeText={(text) => handleInputChange('cliente', item.name, text)}
+                      keyboardType={item.type as KeyboardType}
+                      textContentType='emailAddress'
+                    />
+                  </ThemedView>
+                )
+                : null;
+            })
+          }
+        </ThemedView>
+
+        <ThemedText type='h2' className='text-center pb-2 font-semibold'>Datos del Artículo</ThemedText>
+        <ThemedView className='flex flex-row flex-wrap gap-4 justify-center'>
+          {
+            fieldsArticle.map((item) => {
+              const isRequiredAndEmpty = item.required && (!formData.articulo[item.name] || formData.articulo[item.name] === '');
+              return (
+                <ThemedView className='w-[250]' key={item.name}>
+                  <ThemedText>
+                    {item.label}
+                    {item.required
+                      ? ' *'
+                      : null}
+                  </ThemedText>
+                  <TextInput
+                    className={`border rounded-xl p-2 text-gray-500 ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
+                    placeholder={item.placeholder}
+                    value={formData.articulo[item.name] || ''}
+                    onChangeText={(text) => handleInputChange('articulo', item.name, text)}
+                    keyboardType={item.type as KeyboardType}
+                  />
+                </ThemedView>
+              )
+            })
+          }
+        </ThemedView>
+
+        <TouchableOpacity className='bg-light-secondary w-min h-min rounded-3xl my-4 mx-auto' onPress={handleSubmit}>
+          <ThemedText type='h2' className='text-white px-6 py-3 text-center'>Enviar</ThemedText>
+        </TouchableOpacity>
+
+      </ScrollView>
+    </ThemedView>
   )
 }
-
-const styles = StyleSheet.create({
-  containerHeader: {
-    flex: 1,
-    padding: 15,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  containerTitulos: {
-    flex: 1,
-    padding: 15,
-    width: 'auto',
-    height: 'auto',
-  },
-  titulos: {
-    fontSize: 16,
-  },
-  containerCliente: {
-    flexDirection: 'row',
-    gap: 10,
-    padding: 10,
-  },
-  containerArticulo: {
-    flexDirection: 'row',
-    gap: 10,
-    padding: 10,
-  },
-  containerDescripcion: {
-    flexDirection: 'row',
-    gap: 10,
-    padding: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 10,
-    width: 250,
-    padding: 10,
-    margin: 3,
-  },
-  inputDesc: {
-    borderWidth: 1,
-    borderRadius: 10,
-    width: 800,
-    padding: 10,
-    margin: 3
-  },
-  dropdown: {
-    margin: 1,
-    height: 50,
-    width: 280,
-    borderWidth: 1,
-    borderRadius: 15,
-    padding: 15,
-    borderBottomColor: 'gray',
-    borderBottomWidth: 0.5,
-  },
-  icon: {
-    marginRight: 5,
-  },
-  placeholderStyle: {
-    fontSize: 16,
-  },
-  selectedTextStyle: {
-    fontSize: 16,
-  },
-  iconStyle: {
-    width: 25,
-    height: 25,
-  },
-  inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
-  },
-});
 
 export default RegistrarEmpenio

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { TextInput, ScrollView, KeyboardType, Alert, TouchableOpacity } from 'react-native'
 
 import ThemedView from '@/components/shared/ThemedView';
@@ -30,6 +30,12 @@ const RegistrarEmpenio = () => {
     cliente: {},
     articulo: {},
   });
+
+  const [clientDocumentFile, setClientDocumentFile] = useState<File | null>(null);
+  const [articleImageFile, setArticleImageFile] = useState<File | null>(null);
+
+  const clientDocumentInputRef = useRef<HTMLInputElement>(null);
+  const articleImageInputRef = useRef<HTMLInputElement>(null);
 
   const fieldsClient = [
     {
@@ -121,30 +127,104 @@ const RegistrarEmpenio = () => {
     });
   };
 
+  const handleClientDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      if (file.type === 'application/pdf') {
+        setClientDocumentFile(file);
+      } else {
+        Alert.alert('Error', 'Por favor selecciona un archivo PDF.');
+        setClientDocumentFile(null);
+        if (clientDocumentInputRef.current) {
+          clientDocumentInputRef.current.value = '';
+        }
+      }
+    }
+  };
+
+  const handleArticleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      if (file.type.startsWith('image/')) {
+        setArticleImageFile(file);
+      } else {
+        Alert.alert('Error', 'Por favor selecciona un archivo de imagen.');
+        setArticleImageFile(null);
+        if (articleImageInputRef.current) {
+          articleImageInputRef.current.value = '';
+        }
+      }
+    }
+  };
+
+  const triggerClientDocumentSelect = () => {
+    clientDocumentInputRef.current?.click();
+  };
+
+  const triggerArticleImageSelect = () => {
+    articleImageInputRef.current?.click();
+  };
+
   const handleSubmit = async () => {
+    const dataToSend = new FormData();
+
+    Object.keys(formData.cliente).forEach(key => {
+      if (key === 'Id' && !formData.cliente[key]) return;
+      dataToSend.append(`cliente[${key}]`, String(formData.cliente[key]));
+    });
+    Object.keys(formData.articulo).forEach(key => {
+      dataToSend.append(`articulo[${key}]`, String(formData.articulo[key]));
+    });
+
+    if (clientDocumentFile) {
+      dataToSend.append('documentoCliente', clientDocumentFile, clientDocumentFile.name);
+    } else {
+      Alert.alert('Falta Archivo', 'Por favor, selecciona el documento PDF del cliente.');
+      return;
+    }
+
+    if (articleImageFile) {
+      dataToSend.append('imagenArticulo', articleImageFile, articleImageFile.name);
+    } else {
+      Alert.alert('Falta Archivo', 'Por favor, selecciona la imagen del artículo.');
+      return;
+    }
+
     try {
-      const response = await fetch('localhost:3000/registrar-cliente', {
+      const apiUrl = 'http://localhost:3000/registrar-empenio';
+
+      console.log(formData);
+      console.log(dataToSend);
+
+      /* const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        body: dataToSend,
       });
 
-      const data = await response.json();
-
       if (response.ok) {
-        Alert.alert('Éxito', 'Datos enviados correctamente');
-        setFormData({
-          cliente: {},
-          articulo: {},
-        });
+        const responseData = await response.json();
+        console.log('Success response:', responseData);
+        Alert.alert('Éxito', 'Datos y archivos enviados correctamente');
+        setFormData({ cliente: {}, articulo: {} });
+        setClientDocumentFile(null);
+        setArticleImageFile(null);
+        if (clientDocumentInputRef.current) clientDocumentInputRef.current.value = '';
+        if (articleImageInputRef.current) articleImageInputRef.current.value = '';
+
       } else {
-        Alert.alert('Error', data.message || 'Error al enviar datos');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Hubo un problema con la conexión');
-      console.error('Error al enviar datos:', error);
+        let errorMessage = 'Error al enviar datos';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || `Error ${response.status}`;
+        } catch (e) {
+             errorMessage = `Error: ${response.status} ${response.statusText}`;
+        }
+        console.error('API Error:', response.status, errorMessage);
+        Alert.alert('Error', errorMessage);
+      } */
+    } catch (error: any) {
+      Alert.alert('Error de Red', 'Hubo un problema con la conexión al servidor.');
+      console.error('Network/Fetch Error:', error);
     }
   };
 
@@ -157,29 +237,44 @@ const RegistrarEmpenio = () => {
         <ThemedView className='flex flex-row flex-wrap gap-4 justify-center'>
           {
             fieldsClient.map((item, index) => {
+              if (index === 0) return;
               const isRequiredAndEmpty = item.required && (!formData.articulo[item.name] || formData.articulo[item.name] === '');
-              return index !== 0
-                ? (
-                  <ThemedView className='w-[250]' key={item.name}>
-                    <ThemedText>
-                      {item.label}
-                      {item.required
-                        ? ' *'
-                        : null}
-                    </ThemedText>
-                    <TextInput
-                      className={`border rounded-xl p-2 text-gray-500  ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
-                      placeholder={item.placeholder}
-                      value={formData.cliente[item.name] || ''}
-                      onChangeText={(text) => handleInputChange('cliente', item.name, text)}
-                      keyboardType={item.type as KeyboardType}
-                      textContentType='emailAddress'
-                    />
-                  </ThemedView>
-                )
-                : null;
+              return (
+                <ThemedView className='w-[250]' key={item.name}>
+                  <ThemedText>
+                    {item.label}
+                    {item.required
+                      ? ' *'
+                      : null}
+                  </ThemedText>
+                  <TextInput
+                    className={`border rounded-xl p-2 text-gray-500  ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
+                    placeholder={item.placeholder}
+                    value={formData.cliente[item.name] || ''}
+                    onChangeText={(text) => handleInputChange('cliente', item.name, text)}
+                    keyboardType={item.type as KeyboardType}
+                    textContentType='emailAddress'
+                  />
+                </ThemedView>
+              );
             })
           }
+          <input
+            type="file"
+            ref={clientDocumentInputRef}
+            onChange={handleClientDocumentChange}
+            style={{ display: 'none' }}
+            accept="application/pdf"
+          />
+          <ThemedView className='w-[250]'>
+            <ThemedText>Fotocopia de CI *</ThemedText>
+            <TouchableOpacity onPress={triggerClientDocumentSelect} className='bg-light-primary rounded-xl p-1'>
+              <ThemedText className='text-white text-center'>Seleccionar PDF</ThemedText>
+            </TouchableOpacity>
+            <ThemedText className='italic'>
+              {clientDocumentFile && clientDocumentFile.name ? `Archivo: ${clientDocumentFile.name}` : 'Ningún archivo seleccionado'}
+            </ThemedText>
+          </ThemedView>
         </ThemedView>
 
         <ThemedText type='h2' className='text-center pb-2 font-semibold'>Datos del Artículo</ThemedText>
@@ -206,6 +301,22 @@ const RegistrarEmpenio = () => {
               )
             })
           }
+          <input
+            type="file"
+            ref={articleImageInputRef}
+            onChange={handleArticleImageChange}
+            style={{ display: 'none' }}
+            accept="image/*"
+          />
+          <ThemedView className='w-[250]'>
+            <ThemedText>Imagen del Artículo *</ThemedText>
+            <TouchableOpacity onPress={triggerArticleImageSelect} className='bg-light-primary rounded-xl p-1'>
+              <ThemedText className='text-white text-center'>Seleccionar Imagen</ThemedText>
+            </TouchableOpacity>
+            <ThemedText className='italic'>
+              {articleImageFile && articleImageFile.name ? `Archivo: ${articleImageFile.name}` : 'Ningún archivo seleccionado'}
+            </ThemedText>
+          </ThemedView>
         </ThemedView>
 
         <TouchableOpacity className='bg-light-secondary w-min h-min rounded-3xl my-4 mx-auto' onPress={handleSubmit}>

@@ -191,12 +191,12 @@ const RegistrarEmpenio = () => {
     }
 
     try {
-      const apiUrl = 'http://localhost:3000/registrar-empenio';
+      const apiUrl = 'http://192.168.100.6:3000/registrar-empenio';
 
       console.log(formData);
       console.log(dataToSend);
 
-      /* const response = await fetch(apiUrl, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: dataToSend,
       });
@@ -217,11 +217,11 @@ const RegistrarEmpenio = () => {
           const errorData = await response.json();
           errorMessage = errorData.message || `Error ${response.status}`;
         } catch (e) {
-             errorMessage = `Error: ${response.status} ${response.statusText}`;
+          errorMessage = `Error: ${response.status} ${response.statusText}`;
         }
         console.error('API Error:', response.status, errorMessage);
         Alert.alert('Error', errorMessage);
-      } */
+      }
     } catch (error: any) {
       Alert.alert('Error de Red', 'Hubo un problema con la conexión al servidor.');
       console.error('Network/Fetch Error:', error);

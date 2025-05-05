@@ -132,7 +132,7 @@ const RegistrarEmpenio = () => {
   const handleBlurCi = async () => {
     const ci = formData.cliente.CI;
     try {
-      const response = await fetch(`localhost:3000/cliente/${ci}`);
+      const response = await fetch(`http://127.0.0.1:3000/clientes/${ci}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -216,7 +216,7 @@ const RegistrarEmpenio = () => {
     }
 
     try {
-      const apiUrl = 'localhost:3000/registrar-empenio';
+      const apiUrl = 'http://127.0.0.1:3000/registrar-empenio';
 
       console.log(formData);
       console.log(dataToSend);

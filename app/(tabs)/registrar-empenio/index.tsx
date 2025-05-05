@@ -31,6 +31,8 @@ const RegistrarEmpenio = () => {
     articulo: {},
   });
 
+  const [clientExists, setClientExists] = useState(false);
+
   const [clientDocumentFile, setClientDocumentFile] = useState<File | null>(null);
   const [articleImageFile, setArticleImageFile] = useState<File | null>(null);
 
@@ -64,7 +66,7 @@ const RegistrarEmpenio = () => {
       name: 'Paterno',
       placeholder: 'Pérez...',
       type: 'text',
-      required: false,
+      required: true,
     },
     {
       label: 'Apellido Materno',
@@ -81,7 +83,7 @@ const RegistrarEmpenio = () => {
       required: true,
     },
     {
-      label: 'Teléfono',
+      label: 'Celular',
       name: 'Telefono',
       placeholder: '70123456...',
       type: 'phone',
@@ -127,13 +129,36 @@ const RegistrarEmpenio = () => {
     });
   };
 
+  const handleBlurCi = async () => {
+    const ci = formData.cliente.CI;
+    try {
+      const response = await fetch(`localhost:3000/cliente/${ci}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setFormData({
+          ...formData,
+          cliente: {
+            ...formData.cliente,
+            Id: data.Id,
+            Nombres: data.Nombres,
+            Paterno: data.Paterno,
+            Materno: data.Materno,
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Error en la petición:', error);
+    }
+  }
+
   const handleClientDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       if (file.type === 'application/pdf') {
         setClientDocumentFile(file);
       } else {
-        Alert.alert('Error', 'Por favor selecciona un archivo PDF.');
+        window.alert('Por favor selecciona un archivo PDF.');
         setClientDocumentFile(null);
         if (clientDocumentInputRef.current) {
           clientDocumentInputRef.current.value = '';
@@ -148,7 +173,7 @@ const RegistrarEmpenio = () => {
       if (file.type.startsWith('image/')) {
         setArticleImageFile(file);
       } else {
-        Alert.alert('Error', 'Por favor selecciona un archivo de imagen.');
+        window.alert('Por favor selecciona un archivo de imagen.');
         setArticleImageFile(null);
         if (articleImageInputRef.current) {
           articleImageInputRef.current.value = '';
@@ -179,19 +204,19 @@ const RegistrarEmpenio = () => {
     if (clientDocumentFile) {
       dataToSend.append('documentoCliente', clientDocumentFile, clientDocumentFile.name);
     } else {
-      Alert.alert('Falta Archivo', 'Por favor, selecciona el documento PDF del cliente.');
+      window.alert('Por favor, selecciona el documento PDF del cliente.');
       return;
     }
 
     if (articleImageFile) {
       dataToSend.append('imagenArticulo', articleImageFile, articleImageFile.name);
     } else {
-      Alert.alert('Falta Archivo', 'Por favor, selecciona la imagen del artículo.');
+      window.alert('Por favor, selecciona la imagen del artículo.');
       return;
     }
 
     try {
-      const apiUrl = 'http://192.168.100.6:3000/registrar-empenio';
+      const apiUrl = 'localhost:3000/registrar-empenio';
 
       console.log(formData);
       console.log(dataToSend);
@@ -204,7 +229,7 @@ const RegistrarEmpenio = () => {
       if (response.ok) {
         const responseData = await response.json();
         console.log('Success response:', responseData);
-        Alert.alert('Éxito', 'Datos y archivos enviados correctamente');
+        window.alert('Datos y archivos enviados correctamente');
         setFormData({ cliente: {}, articulo: {} });
         setClientDocumentFile(null);
         setArticleImageFile(null);
@@ -220,17 +245,17 @@ const RegistrarEmpenio = () => {
           errorMessage = `Error: ${response.status} ${response.statusText}`;
         }
         console.error('API Error:', response.status, errorMessage);
-        Alert.alert('Error', errorMessage);
+        window.alert('Error al enviar los datos');
       }
     } catch (error: any) {
-      Alert.alert('Error de Red', 'Hubo un problema con la conexión al servidor.');
+      window.alert('Hubo un problema con la conexión al servidor.');
       console.error('Network/Fetch Error:', error);
     }
   };
 
   return (
     <ThemedView className='flex-1 bg-light-background rounded-tl-3xl'>
-      <ThemedText type='semi-bold' className="text-center py-4">Registrar Emepeño</ThemedText>
+      <ThemedText type='semi-bold' className="text-center py-4">Registrar Empeño</ThemedText>
       <ScrollView className='flex flex-1 p-6 mx-[50] bg-white rounded-3xl items-center'>
 
         <ThemedText type='h2' className='text-center pb-2 font-semibold'>Datos del Cliente</ThemedText>
@@ -238,7 +263,7 @@ const RegistrarEmpenio = () => {
           {
             fieldsClient.map((item, index) => {
               if (index === 0) return;
-              const isRequiredAndEmpty = item.required && (!formData.articulo[item.name] || formData.articulo[item.name] === '');
+              const isRequiredAndEmpty = item.required && (!formData.cliente[item.name] || formData.cliente[item.name] === '');
               return (
                 <ThemedView className='w-[250]' key={item.name}>
                   <ThemedText>
@@ -248,7 +273,8 @@ const RegistrarEmpenio = () => {
                       : null}
                   </ThemedText>
                   <TextInput
-                    className={`border rounded-xl p-2 text-gray-500  ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
+                    onBlur={index === 1 ? handleBlurCi : undefined}
+                    className={`border rounded-xl p-2 text-gray-400  ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
                     placeholder={item.placeholder}
                     value={formData.cliente[item.name] || ''}
                     onChangeText={(text) => handleInputChange('cliente', item.name, text)}
@@ -291,7 +317,7 @@ const RegistrarEmpenio = () => {
                       : null}
                   </ThemedText>
                   <TextInput
-                    className={`border rounded-xl p-2 text-gray-500 ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
+                    className={`border rounded-xl p-2 text-gray-400 ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
                     placeholder={item.placeholder}
                     value={formData.articulo[item.name] || ''}
                     onChangeText={(text) => handleInputChange('articulo', item.name, text)}

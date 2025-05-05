@@ -41,7 +41,7 @@ const Sidebar = () => {
 
   return (
     <ThemedView className='w-[220] p-4 flex'>
-      <ThemedText type='h1' className='text-center'>Pendasol</ThemedText>
+      <ThemedText type='h1' className='text-center'>Prendasol</ThemedText>
       <ThemedView className='flex flex-1 justify-center'>
 
         <TouchableOpacity className='py-3 flex flex-row items-center' onPress={() => router.navigate('/inicio')}>

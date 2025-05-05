@@ -15,7 +15,7 @@ const ThemedText = ({
   return (
     <Text
       className={[
-        'mt-1 text-3xl text-light-text',
+        'my-1 text-3xl text-light-text',
         className,
         type === 'normal' ? 'text-base' : undefined,
         type === 'h1' ? 'text-3xl' : undefined,

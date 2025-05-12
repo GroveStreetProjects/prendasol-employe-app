@@ -1,25 +1,22 @@
 import { useRef, useState } from 'react';
-import { TextInput, ScrollView, KeyboardType, Alert, TouchableOpacity } from 'react-native'
+import { TextInput, ScrollView, KeyboardType, TouchableOpacity } from 'react-native'
+import { Dropdown } from 'react-native-element-dropdown';
 
 import ThemedView from '@/components/shared/ThemedView';
 import ThemedText from '@/components/shared/ThemedText';
 
-interface ClientData {
-  [key: string]: string | number;
-}
-
-interface ArticleData {
-  [key: string]: string | number | Date;
-}
-
-interface FormData {
-  cliente: ClientData;
-  articulo: ArticleData;
-}
-
 interface FormSection {
   [key: string]: any;
 }
+
+type ValidationRule = {
+  required?: boolean;
+  type?: string;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: RegExp;
+  errorMessage?: string;
+};
 
 const RegistrarEmpenio = () => {
 
@@ -30,8 +27,6 @@ const RegistrarEmpenio = () => {
     cliente: {},
     articulo: {},
   });
-
-  const [clientExists, setClientExists] = useState(false);
 
   const [clientDocumentFile, setClientDocumentFile] = useState<File | null>(null);
   const [articleImageFile, setArticleImageFile] = useState<File | null>(null);
@@ -53,6 +48,10 @@ const RegistrarEmpenio = () => {
       placeholder: '1234567...',
       type: 'text',
       required: true,
+      minLength: 7,
+      maxLength: 12,
+      pattern: /^[0-9,-]+$/,
+      errorMessage: 'Solo números permitidos'
     },
     {
       label: 'Nombres',
@@ -60,6 +59,9 @@ const RegistrarEmpenio = () => {
       placeholder: 'Juan Fernando...',
       type: 'text',
       required: true,
+      minLength: 2,
+      pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
+      errorMessage: 'Solo letras permitidas'
     },
     {
       label: 'Apellido Paterno',
@@ -67,6 +69,9 @@ const RegistrarEmpenio = () => {
       placeholder: 'Pérez...',
       type: 'text',
       required: true,
+      minLength: 2,
+      pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/,
+      errorMessage: 'Solo letras permitidas'
     },
     {
       label: 'Apellido Materno',
@@ -74,13 +79,15 @@ const RegistrarEmpenio = () => {
       placeholder: 'Martínez...',
       type: 'text',
       required: false,
+      pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/,
+      errorMessage: 'Solo letras permitidas'
     },
     {
       label: 'Correo Electrónico',
       name: 'Correo',
       placeholder: 'correo@correo.com...',
       type: 'email',
-      required: true,
+      required: true
     },
     {
       label: 'Celular',
@@ -88,6 +95,8 @@ const RegistrarEmpenio = () => {
       placeholder: '70123456...',
       type: 'phone',
       required: true,
+      minLength: 7,
+      maxLength: 15
     },
   ];
 
@@ -98,6 +107,7 @@ const RegistrarEmpenio = () => {
       placeholder: 'Anillo de oro...',
       type: 'text',
       required: true,
+      minLength: 5
     },
     {
       label: 'Descripción',
@@ -105,6 +115,7 @@ const RegistrarEmpenio = () => {
       placeholder: 'Anillo de oro de 18k...',
       type: 'text',
       required: true,
+      minLength: 15
     },
     {
       label: 'Precio de Empeño',
@@ -112,8 +123,101 @@ const RegistrarEmpenio = () => {
       placeholder: '800.00...',
       type: 'numeric',
       required: true,
+      pattern: /^[0-9]+(\.[0-9]{1,2})?$/,
+      errorMessage: 'Formato inválido (ej. 800.00)'
     },
   ];
+
+  const fieldsJewes = [
+    {
+      label: 'Material',
+      name: 'Material',
+      placeholder: 'Dropdown',
+      type: 'text',
+      required: true,
+      minLength: 5
+    },
+    {
+      label: 'Tipo',
+      name: 'Tipo',
+      placeholder: 'Dropdown',
+      type: 'numeric',
+      required: true,
+    },
+    {
+      label: 'Kilataje',
+      name: 'Ancho',
+      placeholder: '32...',
+      type: 'numeric',
+      required: true,
+    },
+    {
+      label: 'Peso (en gramos)',
+      name: 'Peso',
+      placeholder: '87.2...',
+      type: 'numeric',
+      required: true,
+    },
+  ];
+
+  const [validationErrors, setValidationErrors] = useState<{
+    cliente: { [key: string]: string | null };
+    articulo: { [key: string]: string | null };
+  }>({
+    cliente: {},
+    articulo: {}
+  });
+
+  const validateInput = (value: string, rules: ValidationRule): string | null => {
+    if (rules.required && !value.trim()) {
+      return 'Este campo es obligatorio';
+    }
+
+    if (value) {
+      if (rules.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return 'Ingrese un correo electrónico válido';
+      }
+
+      if (rules.type === 'phone' && !/^[0-9]{7,15}$/.test(value)) {
+        return 'Ingrese un número de teléfono válido (solo números)';
+      }
+
+      if (rules.type === 'numeric' && !/^[0-9]+(\.[0-9]{1,2})?$/.test(value)) {
+        return 'Ingrese un número válido';
+      }
+
+      if (rules.minLength && value.length < rules.minLength) {
+        return `Mínimo ${rules.minLength} caracteres`;
+      }
+
+      if (rules.maxLength && value.length > rules.maxLength) {
+        return `Máximo ${rules.maxLength} caracteres`;
+      }
+
+      if (rules.pattern && !rules.pattern.test(value)) {
+        return rules.errorMessage || 'Formato inválido';
+      }
+    }
+
+    return null;
+  };
+
+  const handleInputChangeWithValidation = (
+    section: 'cliente' | 'articulo',
+    name: string,
+    value: string | number,
+    validationRules: ValidationRule
+  ) => {
+    handleInputChange(section, name, value);
+    const error = validateInput(String(value), validationRules);
+    setValidationErrors(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [name]: error
+      }
+    }));
+  };
 
   const handleInputChange = (
     section: 'cliente' | 'articulo',
@@ -127,6 +231,34 @@ const RegistrarEmpenio = () => {
         [name]: value
       }
     });
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors = {
+      cliente: {} as { [key: string]: string | null },
+      articulo: {} as { [key: string]: string | null }
+    };
+
+    fieldsClient.forEach(field => {
+      if (field.required || field.name in formData.cliente) {
+        const value = formData.cliente[field.name] || '';
+        newErrors.cliente[field.name] = validateInput(String(value), field);
+      }
+    });
+
+    fieldsArticle.forEach(field => {
+      if (field.required || field.name in formData.articulo) {
+        const value = formData.articulo[field.name] || '';
+        newErrors.articulo[field.name] = validateInput(String(value), field);
+      }
+    });
+
+    setValidationErrors(newErrors);
+
+    const hasClientErrors = Object.values(newErrors.cliente).some(error => error);
+    const hasArticleErrors = Object.values(newErrors.articulo).some(error => error);
+
+    return !hasClientErrors && !hasArticleErrors;
   };
 
   const handleBlurCi = async () => {
@@ -191,6 +323,10 @@ const RegistrarEmpenio = () => {
   };
 
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      window.alert('Por favor, corrige los errores en el formulario');
+      return;
+    }
     const dataToSend = new FormData();
 
     Object.keys(formData.cliente).forEach(key => {
@@ -217,9 +353,6 @@ const RegistrarEmpenio = () => {
 
     try {
       const apiUrl = 'http://127.0.0.1:3000/registrar-empenio';
-
-      console.log(formData);
-      console.log(dataToSend);
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -263,24 +396,23 @@ const RegistrarEmpenio = () => {
           {
             fieldsClient.map((item, index) => {
               if (index === 0) return;
-              const isRequiredAndEmpty = item.required && (!formData.cliente[item.name] || formData.cliente[item.name] === '');
+              const error = validationErrors.cliente[item.name];
               return (
                 <ThemedView className='w-[250]' key={item.name}>
                   <ThemedText>
                     {item.label}
-                    {item.required
-                      ? ' *'
-                      : null}
+                    {item.required ? ' *' : null}
                   </ThemedText>
                   <TextInput
                     onBlur={index === 1 ? handleBlurCi : undefined}
-                    className={`border rounded-xl p-2 text-gray-400  ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
+                    className={`border rounded-xl p-2 ${error ? 'border-red-500' : 'border-gray-300'} ${(formData.cliente[item.name] == undefined || formData.cliente[item.name] == '') ? 'text-gray-400' : ''}`}
                     placeholder={item.placeholder}
                     value={formData.cliente[item.name] || ''}
-                    onChangeText={(text) => handleInputChange('cliente', item.name, text)}
+                    onChangeText={(text) => handleInputChangeWithValidation('cliente', item.name, text, item)}
                     keyboardType={item.type as KeyboardType}
-                    textContentType='emailAddress'
+                    textContentType={item.type === 'email' ? 'emailAddress' : 'none'}
                   />
+                  {error && <ThemedText className="text-red-500 text-xs">{error}</ThemedText>}
                 </ThemedView>
               );
             })
@@ -306,25 +438,25 @@ const RegistrarEmpenio = () => {
         <ThemedText type='h2' className='text-center pb-2 font-semibold'>Datos del Artículo</ThemedText>
         <ThemedView className='flex flex-row flex-wrap gap-4 justify-center'>
           {
-            fieldsArticle.map((item) => {
-              const isRequiredAndEmpty = item.required && (!formData.articulo[item.name] || formData.articulo[item.name] === '');
+            fieldsArticle.map((item, index) => {
+              const error = validationErrors.articulo[item.name];
               return (
                 <ThemedView className='w-[250]' key={item.name}>
                   <ThemedText>
                     {item.label}
-                    {item.required
-                      ? ' *'
-                      : null}
+                    {item.required ? ' *' : null}
                   </ThemedText>
                   <TextInput
-                    className={`border rounded-xl p-2 text-gray-400 ${isRequiredAndEmpty ? 'border-red-500' : ''}`}
+                    className={`border rounded-xl p-2 ${error ? 'border-red-500' : 'border-gray-300'} ${(formData.articulo[item.name] == undefined || formData.articulo[item.name] == '') ? 'text-gray-400' : ''}`}
                     placeholder={item.placeholder}
                     value={formData.articulo[item.name] || ''}
-                    onChangeText={(text) => handleInputChange('articulo', item.name, text)}
+                    onChangeText={(text) => handleInputChangeWithValidation('articulo', item.name, text, item)}
                     keyboardType={item.type as KeyboardType}
+                    textContentType={item.type === 'email' ? 'emailAddress' : 'none'}
                   />
+                  {error && <ThemedText className="text-red-500 text-xs">{error}</ThemedText>}
                 </ThemedView>
-              )
+              );
             })
           }
           <input

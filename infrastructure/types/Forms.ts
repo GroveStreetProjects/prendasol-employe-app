@@ -1,0 +1,1 @@
+type Forms = 'cliente' | 'articulo';

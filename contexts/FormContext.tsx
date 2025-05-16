@@ -22,6 +22,8 @@ type FormDataType = {
 type FormContextType = {
   formData: FormDataType;
   validationErrors: { cliente: Record<string, string | null>, articulo: Record<string, string | null> };
+  clientDocumentFile: File | null,
+  articleImageFile: File | null,
   handleInputChange: (section: 'cliente' | 'articulo', name: string, value: string | number) => void;
   handleInputChangeWithValidation: (section: 'cliente' | 'articulo', name: string, value: string | number, validationRules: ValidationRule) => void;
   validateForm: () => boolean;
@@ -31,6 +33,8 @@ type FormContextType = {
   triggerArticleImageSelect: () => void;
   clientDocumentInputRef: React.RefObject<HTMLInputElement>;
   articleImageInputRef: React.RefObject<HTMLInputElement>;
+  handleClientDocumentChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleArticleImageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
 const FormContext = createContext<FormContextType | null>(null);
@@ -239,6 +243,8 @@ const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     <FormContext.Provider value={{
       formData,
       validationErrors,
+      clientDocumentFile,
+      articleImageFile,
       handleInputChange,
       handleInputChangeWithValidation,
       validateForm,
@@ -247,7 +253,9 @@ const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       triggerClientDocumentSelect,
       triggerArticleImageSelect,
       clientDocumentInputRef,
-      articleImageInputRef
+      articleImageInputRef,
+      handleClientDocumentChange,
+      handleArticleImageChange,
     }}>
       {children}
     </FormContext.Provider>

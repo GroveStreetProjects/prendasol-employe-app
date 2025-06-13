@@ -18,6 +18,10 @@ export const rutasEmpenio: MenuRoute[] = [
     title: 'Nuevo Empeño',
     name: 'registrar-empenio/index',
   },
+  {
+    title: 'Devolver Emepeño',
+    name: 'devolver-empenio/index',
+  },
 ];
 
 export const rutasCliente: MenuRoute[] = [

@@ -1,5 +1,5 @@
 import { createContext, useRef, useState } from 'react';
-import { FormsInputs } from '@/constants/forms/Forms';
+import { FormsInputs, fieldsByCategory } from '@/constants/forms/Forms';
 
 interface FormSection {
   [key: string]: any;
@@ -17,15 +17,17 @@ type ValidationRule = {
 type FormDataType = {
   cliente: FormSection;
   articulo: FormSection;
+  detalles: FormSection;
 };
+
+type FormSectionKey = 'cliente' | 'articulo' | 'detalles';
 
 type FormContextType = {
   formData: FormDataType;
-  validationErrors: { cliente: Record<string, string | null>, articulo: Record<string, string | null> };
+  validationErrors: { cliente: Record<string, string | null>, articulo: Record<string, string | null>, detalles: Record<string, string | null> };
   clientDocumentFile: File | null,
   articleImageFile: File | null,
-  handleInputChange: (section: 'cliente' | 'articulo', name: string, value: string | number) => void;
-  handleInputChangeWithValidation: (section: 'cliente' | 'articulo', name: string, value: string | number, validationRules: ValidationRule) => void;
+  handleChange: (section: FormSectionKey, name: string, value: string | number, validationRules?: ValidationRule) => void;
   validateForm: () => boolean;
   handleBlurCi: () => Promise<void>;
   handleSubmit: () => Promise<void>;
@@ -40,8 +42,8 @@ type FormContextType = {
 const FormContext = createContext<FormContextType | null>(null);
 
 const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [formData, setFormData] = useState<FormDataType>({ cliente: {}, articulo: {} });
-  const [validationErrors, setValidationErrors] = useState({ cliente: {}, articulo: {} });
+  const [formData, setFormData] = useState<FormDataType>({ cliente: {}, articulo: { tipo: '1', empleadoId: 1 }, detalles: {} });
+  const [validationErrors, setValidationErrors] = useState({ cliente: {}, articulo: {}, detalles: {} });
 
   const clientDocumentInputRef = useRef<HTMLInputElement>(null);
   const articleImageInputRef = useRef<HTMLInputElement>(null);
@@ -63,10 +65,11 @@ const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     return null;
   };
 
-  const handleInputChange = (
-    section: 'cliente' | 'articulo',
+  const handleChange = (
+    section: FormSectionKey,
     name: string,
-    value: string | number
+    value: string | number,
+    validationRules?: ValidationRule
   ) => {
     setFormData(prev => ({
       ...prev,
@@ -75,29 +78,29 @@ const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         [name]: value
       }
     }));
-  };
 
-  const handleInputChangeWithValidation = (
-    section: 'cliente' | 'articulo',
-    name: string,
-    value: string | number,
-    validationRules: ValidationRule
-  ) => {
-    handleInputChange(section, name, value);
-    const error = validateInput(String(value), validationRules);
-    setValidationErrors(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [name]: error
-      }
-    }));
+    if (validationRules) {
+      const error = validateInput(String(value), validationRules);
+      setValidationErrors(prev => ({
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [name]: error
+        }
+      }));
+    }
+
+    if (section === 'articulo' && name === 'tipo') {
+      setFormData(prev => ({ ...prev, detalles: {} }));
+      setValidationErrors(prev => ({ ...prev, detalles: {} }));
+    }
   };
 
   const validateForm = (): boolean => {
     const newErrors = {
       cliente: {} as { [key: string]: string | null },
-      articulo: {} as { [key: string]: string | null }
+      articulo: {} as { [key: string]: string | null },
+      detalles: {} as { [key: string]: string | null }
     };
     fieldsClient.forEach(field => {
       if (field.required || field.name in formData.cliente) {
@@ -112,12 +115,23 @@ const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       }
     });
 
+    const articleType = formData.articulo.tipo;
+    const fieldsToValidate = fieldsByCategory[articleType as keyof typeof fieldsByCategory];
+
+    fieldsToValidate.forEach(field => {
+      if (field.required || field.name in formData.detalles) {
+        const value = formData.detalles?.[field.name] || '';
+        newErrors.detalles[field.name] = validateInput(String(value), field);
+      }
+    });
+
     setValidationErrors(newErrors);
 
     const hasClientErrors = Object.values(newErrors.cliente).some(error => error);
     const hasArticleErrors = Object.values(newErrors.articulo).some(error => error);
+    const hasDetailsErrors = Object.values(newErrors.detalles).some(error => error);
 
-    return !hasClientErrors && !hasArticleErrors;
+    return !hasClientErrors && !hasDetailsErrors && !hasDetailsErrors;
   };
 
   const handleBlurCi = async () => {
@@ -179,12 +193,19 @@ const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }
 
     const dataToSend = new FormData();
+
+    console.log('Primero')
+
+
     Object.keys(formData.cliente).forEach(key => {
       if (key === 'Id' && !formData.cliente[key]) return;
       dataToSend.append(`cliente[${key}]`, String(formData.cliente[key]));
     });
     Object.keys(formData.articulo).forEach(key => {
       dataToSend.append(`articulo[${key}]`, String(formData.articulo[key]));
+    });
+    Object.keys(formData.detalles).forEach(key => {
+      dataToSend.append(`detalles[${key}]`, String(formData.detalles?.[key]));
     });
 
     if (clientDocumentFile) {
@@ -201,6 +222,10 @@ const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       return;
     }
 
+    for (const [key, value] of dataToSend.entries()) {
+      console.log(`${key}: ${value}`);
+    }
+    console.log('Segundo')
     try {
       const apiUrl = 'http://127.0.0.1:3000/registrar-empenio';
 
@@ -213,7 +238,7 @@ const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         const responseData = await response.json();
         console.log('Success response:', responseData);
         window.alert('Datos y archivos enviados correctamente');
-        setFormData({ cliente: {}, articulo: {} });
+        setFormData({ cliente: {}, articulo: {}, detalles: {} });
         setClientDocumentFile(null);
         setArticleImageFile(null);
         if (clientDocumentInputRef.current) clientDocumentInputRef.current.value = '';
@@ -245,8 +270,7 @@ const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       validationErrors,
       clientDocumentFile,
       articleImageFile,
-      handleInputChange,
-      handleInputChangeWithValidation,
+      handleChange,
       validateForm,
       handleBlurCi,
       handleSubmit,

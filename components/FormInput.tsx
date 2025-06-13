@@ -3,7 +3,7 @@ import ThemedView from './shared/ThemedView'
 import ThemedText from './shared/ThemedText'
 import { useFormContext } from '@/hooks/useFormContext'
 
-type Forms = 'cliente' | 'articulo';
+type Forms = 'cliente' | 'articulo' | 'detalles';
 
 interface Props extends TextInputProps {
   item: any,
@@ -20,7 +20,7 @@ const FormInput = ({
   ...rest
 }: Props) => {
 
-  const { formData, handleInputChangeWithValidation, handleBlurCi } = useFormContext();
+  const { formData, handleChange, handleBlurCi } = useFormContext();
 
   return (
     <ThemedView className='w-[250]' key={item.name}>
@@ -33,7 +33,7 @@ const FormInput = ({
         className={`border rounded-xl p-2 ${error ? 'border-red-500' : 'border-gray-300'} ${(formData[form][item.name] == undefined || formData[form][item.name] == '') ? 'text-gray-400' : ''}`}
         placeholder={item.placeholder}
         value={formData[form]?.[item.name] || ''}
-        onChangeText={(text) => handleInputChangeWithValidation(form, item.name, text, item)}
+        onChangeText={(text) => handleChange(form, item.name, text, item)}
         keyboardType={item.type as KeyboardType}
         textContentType={item.type === 'email' ? 'emailAddress' : 'none'}
         {...rest}
